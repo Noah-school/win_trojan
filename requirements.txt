@@ -1,0 +1,9 @@
+requests
+github3.py
+pynput
+psutil
+pycryptodome
+pyautogui
+scapy
+paramiko
+Pillow
