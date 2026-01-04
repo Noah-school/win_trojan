@@ -76,4 +76,8 @@ if exist "trojan.py" (
     pause
 )
 
+<<<<<<< HEAD
 exit
+=======
+exit
+>>>>>>> refs/remotes/origin/main
