@@ -24,7 +24,7 @@ if getattr(sys, 'frozen', False):
 else:
     basedir = os.path.dirname(os.path.abspath(__file__))
 
-load_dotenv(os.path.join(basedir, '.env'), override=True)
+load_dotenv(os.path.join(basedir, 'env'), override=True)
 GH_TOKEN = os.getenv("GH_TOKEN")
 REPO_NAME = os.getenv("REPO_NAME", "win_trojan")
 USER_NAME = os.getenv("USER_NAME", "Noah-school")
